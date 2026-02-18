@@ -12,7 +12,7 @@ env/
 dist/
 dist-electron/
 out/
-build/
+backend-dist/
 *.tsbuildinfo
 
 # Environment & credentials

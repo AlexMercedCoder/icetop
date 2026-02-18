@@ -36,22 +36,33 @@
   "build": {
     "appId": "com.icetop.app",
     "productName": "IceTop",
+    "icon": "build/icon.png",
     "directories": {
       "output": "out"
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*",
-      "python/**/*"
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend-dist",
+        "to": "backend-dist",
+        "filter": ["**/*"]
+      }
     ],
     "linux": {
-      "target": ["AppImage", "deb"]
+      "target": ["AppImage", "deb"],
+      "icon": "build/icon.png",
+      "category": "Development"
     },
     "mac": {
-      "target": ["dmg"]
+      "target": ["dmg"],
+      "icon": "build/icon.icns"
     },
     "win": {
-      "target": ["nsis"]
+      "target": ["nsis"],
+      "icon": "build/icon.ico"
     }
   }
 }

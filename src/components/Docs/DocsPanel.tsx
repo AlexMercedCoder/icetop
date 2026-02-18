@@ -1,71 +1,87 @@
-import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ExternalLink, Book, Code, Database, Bot, Terminal } from 'lucide-react';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 import './Docs.scss';
 
-const docLinks = [
+// Import markdown content as raw strings (Vite feature)
+import docGettingStarted from '../../docs/01-getting-started.md?raw';
+import docBrowsing from '../../docs/02-browsing-data.md?raw';
+import docSQL from '../../docs/03-sql-queries.md?raw';
+import docAI from '../../docs/04-ai-assistant.md?raw';
+import docNotebooks from '../../docs/05-notebooks.md?raw';
+
+const internalDocs = [
+  { id: 'start', title: 'Getting Started', icon: <Book size={16} />, content: docGettingStarted },
+  { id: 'browse', title: 'Browsing Data', icon: <Database size={16} />, content: docBrowsing },
+  { id: 'sql', title: 'SQL Queries', icon: <Code size={16} />, content: docSQL },
+  { id: 'ai', title: 'AI Assistant', icon: <Bot size={16} />, content: docAI },
+  { id: 'notebook', title: 'Notebooks', icon: <Terminal size={16} />, content: docNotebooks },
+];
+
+const externalLinks = [
   { title: 'IceFrame GitHub', url: 'https://github.com/AlexMercedCoder/iceframe', desc: 'Source code and README' },
-  { title: 'Creating Tables', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/creating_tables.md', desc: 'Create Iceberg tables' },
-  { title: 'Reading Tables', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/reading_tables.md', desc: 'Read and scan data' },
-  { title: 'Query Builder API', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/query_builder.md', desc: 'Fluent query API' },
-  { title: 'SQL (DataFusion)', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/datafusion.md', desc: 'SQL query support' },
-  { title: 'AI Agent', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/ai_agent.md', desc: 'Natural language chat' },
-  { title: 'Notebook Integration', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/notebooks.md', desc: 'Jupyter magics' },
-  { title: 'Schema Evolution', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/schema_evolution.md', desc: 'Add/drop/rename columns' },
-  { title: 'Table Maintenance', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/maintenance.md', desc: 'Compaction, snapshots' },
-  { title: 'Data Ingestion', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/ingestion.md', desc: 'Load data from files' },
-  { title: 'Environment Variables', url: 'https://github.com/AlexMercedCoder/iceframe/blob/main/docs/variables.md', desc: 'Config reference' },
   { title: 'PyIceberg Configuration', url: 'https://py.iceberg.apache.org/configuration/', desc: 'PyIceberg YAML format' },
 ];
 
 export const DocsPanel: React.FC = () => {
+  const [activeDocId, setActiveDocId] = useState<string>('start');
+  const activeDoc = internalDocs.find((d) => d.id === activeDocId);
+
+  useEffect(() => {
+    // Post-render highlighting
+    hljs.highlightAll();
+  }, [activeDocId]);
+
+  const getHtml = (markdown: string) => {
+    return { __html: marked.parse(markdown) as string };
+  };
+
   return (
-    <div className="docs-panel scrollable">
-      <div className="docs-panel__header">
-        <h2>Documentation</h2>
-        <p className="text-muted">Quick reference to IceFrame and Apache Iceberg documentation.</p>
-      </div>
-
-      <div className="docs-panel__grid">
-        {docLinks.map((link) => (
-          <a
-            key={link.url}
-            className="docs-card"
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="docs-card__title">
-              {link.title}
+    <div className="docs-panel">
+      <div className="docs-sidebar">
+        <div className="docs-sidebar__header">
+          <h2>Docs</h2>
+        </div>
+        <nav className="docs-sidebar__nav">
+          {internalDocs.map((doc) => (
+            <button
+              key={doc.id}
+              className={`docs-nav-item ${activeDocId === doc.id ? 'active' : ''}`}
+              onClick={() => setActiveDocId(doc.id)}
+            >
+              {doc.icon}
+              <span>{doc.title}</span>
+            </button>
+          ))}
+        </nav>
+        
+        <div className="docs-sidebar__section">
+          <h3>External Links</h3>
+          {externalLinks.map((link) => (
+            <a
+              key={link.url}
+              className="docs-nav-link"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span>{link.title}</span>
               <ExternalLink size={12} />
-            </div>
-            <div className="docs-card__desc">{link.desc}</div>
-          </a>
-        ))}
+            </a>
+          ))}
+        </div>
       </div>
 
-      <section className="docs-panel__quickstart">
-        <h3>Quick Start</h3>
-        <pre className="docs-panel__code">
-{`from iceframe import IceFrame
-
-# Initialize from pyiceberg.yaml
-ice = IceFrame.from_catalog("dremio")
-
-# Read a table
-df = ice.read_table("testing.my_table")
-
-# SQL query via DataFusion
-df = ice.query_datafusion("SELECT * FROM my_table LIMIT 10")
-
-# Query Builder
-from iceframe.expressions import col
-result = (ice.query("my_table")
-    .filter(col("age") > 30)
-    .select("name", "age")
-    .execute())
-`}
-        </pre>
-      </section>
+      <div className="docs-content scrollable">
+        {activeDoc && (
+          <div 
+            className="markdown-body" 
+            dangerouslySetInnerHTML={getHtml(activeDoc.content)} 
+          />
+        )}
+      </div>
     </div>
   );
 };

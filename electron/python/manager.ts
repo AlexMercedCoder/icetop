@@ -24,12 +24,24 @@ export class PythonManager {
   }
 
   async start(): Promise<void> {
-    const serverPath = path.join(__dirname, '..', 'python', 'server.py');
+    const isDev = !!process.env.VITE_DEV_SERVER_URL;
 
-    this.process = spawn('python3', ['-u', serverPath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
+    if (isDev) {
+      // Development: run Python source directly
+      const serverPath = path.join(__dirname, '..', 'python', 'server.py');
+      this.process = spawn('python3', ['-u', serverPath], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env },
+      });
+    } else {
+      // Production: run PyInstaller-compiled binary
+      const binaryName = process.platform === 'win32' ? 'icetop-backend.exe' : 'icetop-backend';
+      const binaryPath = path.join(process.resourcesPath, 'backend-dist', binaryName);
+      this.process = spawn(binaryPath, [], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env },
+      });
+    }
 
     this.process.stdout?.on('data', (data: Buffer) => {
       this.buffer += data.toString();

@@ -1,0 +1,7 @@
+iceframe>=0.11.0
+pyyaml>=6.0
+polars>=1.0.0
+pyiceberg>=0.9.0
+openai>=1.0.0
+anthropic>=0.40.0
+google-generativeai>=0.8.0

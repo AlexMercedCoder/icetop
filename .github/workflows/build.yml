@@ -1,0 +1,176 @@
+name: Build & Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS ARM (Apple Silicon)
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            python-version: '3.11'
+          # macOS Intel (x64)
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            python-version: '3.11'
+          # Windows
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            python-version: '3.11'
+          # Linux (use 22.04 for broader glibc compatibility)
+          - os: ubuntu-22.04
+            platform: linux
+            arch: x64
+            python-version: '3.11'
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.platform }}-${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+          pip install pyinstaller
+
+      - name: Bundle Python backend (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/bundle-backend.sh
+          bash scripts/bundle-backend.sh
+
+      - name: Bundle Python backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m PyInstaller `
+            --name icetop-backend `
+            --onedir `
+            --noconfirm `
+            --clean `
+            --hidden-import=handlers `
+            --hidden-import=handlers.catalog `
+            --hidden-import=handlers.chat `
+            --hidden-import=handlers.agent `
+            --hidden-import=handlers.notebook `
+            --hidden-import=handlers.sql `
+            --hidden-import=handlers.settings `
+            --hidden-import=handlers.iceframe_loader `
+            --hidden-import=iceframe `
+            --hidden-import=pyiceberg `
+            --hidden-import=pyiceberg.catalog `
+            --hidden-import=pyiceberg.catalog.rest `
+            --hidden-import=pyiceberg.io `
+            --hidden-import=pyiceberg.io.fsspec `
+            --hidden-import=polars `
+            --hidden-import=yaml `
+            --hidden-import=openai `
+            --hidden-import=anthropic `
+            --hidden-import=google.generativeai `
+            --hidden-import=httpx `
+            --hidden-import=httpcore `
+            --hidden-import=anyio `
+            --hidden-import=anyio._backends `
+            --hidden-import=anyio._backends._asyncio `
+            --hidden-import=sniffio `
+            --hidden-import=h11 `
+            --hidden-import=pydantic `
+            --hidden-import=pydantic_core `
+            --hidden-import=certifi `
+            --hidden-import=charset_normalizer `
+            --hidden-import=requests `
+            --hidden-import=urllib3 `
+            --hidden-import=idna `
+            --collect-submodules=pyiceberg `
+            --collect-submodules=iceframe `
+            --collect-submodules=polars `
+            --collect-submodules=google.generativeai `
+            --paths=python `
+            python/server.py
+          Move-Item -Path dist/icetop-backend -Destination backend-dist
+
+      - name: Generate macOS icon (icns)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p build/icon.iconset
+          for size in 16 32 64 128 256 512; do
+            sips -z $size $size build/icon.png --out build/icon.iconset/icon_${size}x${size}.png
+            double=$((size * 2))
+            if [ $double -le 1024 ]; then
+              sips -z $double $double build/icon.png --out build/icon.iconset/icon_${size}x${size}@2x.png
+            fi
+          done
+          iconutil -c icns build/icon.iconset -o build/icon.icns
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Linux packaging tools
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg fakeroot rpm
+
+      - name: Build Electron installer
+        run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/**/*.dmg
+            out/**/*.zip
+            out/**/*.exe
+            out/**/*.nsis
+            out/**/*.deb
+            out/**/*.AppImage
+            out/**/*.rpm
+          if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

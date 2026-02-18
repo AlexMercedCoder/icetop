@@ -96,16 +96,46 @@ class CatalogHandler:
         # Include snapshots in the same response (same table object, no second load)
         snapshots = []
         try:
-            if hasattr(tbl, "metadata") and tbl.metadata and hasattr(tbl.metadata, "snapshots") and tbl.metadata.snapshots:
-                for snap in tbl.metadata.snapshots:
-                    snapshots.append({
-                        "snapshotId": str(snap.snapshot_id),
-                        "timestamp": str(snap.timestamp_ms),
-                        "operation": snap.summary.operation if snap.summary else "unknown",
-                        "summary": dict(snap.summary) if snap.summary else {},
-                    })
-        except Exception:
-            pass  # Snapshots not available for this catalog type
+            import sys
+            print(f"[DEBUG] Table type: {type(tbl).__name__}", file=sys.stderr)
+            print(f"[DEBUG] Has metadata: {hasattr(tbl, 'metadata')}", file=sys.stderr)
+            if hasattr(tbl, "metadata") and tbl.metadata:
+                print(f"[DEBUG] Metadata type: {type(tbl.metadata).__name__}", file=sys.stderr)
+                print(f"[DEBUG] Metadata attrs: {[a for a in dir(tbl.metadata) if not a.startswith('_')]}", file=sys.stderr)
+                print(f"[DEBUG] Has snapshots: {hasattr(tbl.metadata, 'snapshots')}", file=sys.stderr)
+                if hasattr(tbl.metadata, "snapshots"):
+                    print(f"[DEBUG] Snapshots value: {tbl.metadata.snapshots}", file=sys.stderr)
+                    print(f"[DEBUG] Snapshots type: {type(tbl.metadata.snapshots)}", file=sys.stderr)
+                    if tbl.metadata.snapshots:
+                        for snap in tbl.metadata.snapshots:
+                            print(f"[DEBUG] Snap: {snap}", file=sys.stderr)
+                            snapshots.append({
+                                "snapshotId": str(snap.snapshot_id),
+                                "timestamp": str(snap.timestamp_ms),
+                                "operation": snap.summary.operation if snap.summary else "unknown",
+                                "summary": dict(snap.summary) if snap.summary else {},
+                            })
+            # Also check for history() method
+            if hasattr(tbl, "history"):
+                print(f"[DEBUG] Has history method", file=sys.stderr)
+                try:
+                    hist = tbl.history()
+                    print(f"[DEBUG] History: {hist}", file=sys.stderr)
+                except Exception as e:
+                    print(f"[DEBUG] History error: {e}", file=sys.stderr)
+            # Check for snapshots() method
+            if hasattr(tbl, "snapshots"):
+                print(f"[DEBUG] Has snapshots() method", file=sys.stderr)
+                try:
+                    snaps = tbl.snapshots()
+                    print(f"[DEBUG] snapshots(): {snaps}", file=sys.stderr)
+                except Exception as e:
+                    print(f"[DEBUG] snapshots() error: {e}", file=sys.stderr)
+        except Exception as e:
+            import sys
+            print(f"[DEBUG] Snapshot error: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
 
         return {
             "columns": columns,

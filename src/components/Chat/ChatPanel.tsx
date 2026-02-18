@@ -6,7 +6,7 @@ import './Chat.scss';
 
 export const ChatPanel: React.FC = () => {
   const {
-    sessions, activeSessionId, isStreaming, catalog,
+    sessions, activeSessionId, isStreaming, catalog, toolStatus,
     sendMessage, resetConversation, createSession,
     switchSession, deleteSession,
   } = useChatStore();
@@ -142,8 +142,11 @@ export const ChatPanel: React.FC = () => {
                 ) : (
                   <span>{msg.content}</span>
                 )}
-                {msg.isStreaming && !msg.content && (
-                  <Loader2 size={16} className="spin" />
+                {msg.isStreaming && (
+                  <div className="chat-panel__tool-status">
+                    {toolStatus && <span className="chat-panel__tool-label">{toolStatus}</span>}
+                    {!msg.content && <Loader2 size={16} className="spin" />}
+                  </div>
                 )}
               </div>
             </div>

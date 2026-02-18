@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar/Sidebar';
 import { ChatPanel } from './components/Chat/ChatPanel';
 import { SQLPanel } from './components/SQL/SQLPanel';
 import { NotebookPanel } from './components/Notebook/NotebookPanel';
+import { MetadataPanel } from './components/Metadata/MetadataPanel';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { DocsPanel } from './components/Docs/DocsPanel';
 import { StatusBar } from './components/shared/StatusBar';
@@ -11,7 +12,7 @@ import { useCatalogStore } from './stores/catalogStore';
 import { useSettingsStore } from './stores/settingsStore';
 import './App.scss';
 
-type WorkspaceView = 'chat' | 'sql' | 'notebook' | 'settings' | 'docs';
+type WorkspaceView = 'chat' | 'sql' | 'notebook' | 'metadata' | 'settings' | 'docs';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<WorkspaceView>('sql');
@@ -41,6 +42,8 @@ const App: React.FC = () => {
         return <SQLPanel />;
       case 'notebook':
         return <NotebookPanel />;
+      case 'metadata':
+        return <MetadataPanel />;
       case 'settings':
         return <SettingsPanel />;
       case 'docs':

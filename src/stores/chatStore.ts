@@ -8,6 +8,7 @@ interface ChatStore {
   catalog: string;
   isStreaming: boolean;
   error: string | null;
+  toolStatus: string | null;
 
   // Session management
   createSession: () => void;
@@ -19,6 +20,16 @@ interface ChatStore {
   sendMessage: (content: string) => Promise<void>;
   resetConversation: () => Promise<void>;
 }
+
+const TOOL_LABELS: Record<string, string> = {
+  list_namespaces: '📂 Listing namespaces',
+  list_tables: '📋 Listing tables',
+  describe_table: '🔍 Describing table schema',
+  read_table: '📖 Reading table data',
+  query_sql: '🔎 Running SQL query',
+  get_snapshots: '📸 Getting snapshot history',
+  get_table_stats: '📊 Getting table statistics',
+};
 
 const makeSession = (catalog: string): ChatSession => ({
   id: uuid(),
@@ -34,6 +45,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   catalog: 'dremio',
   isStreaming: false,
   error: null,
+  toolStatus: null,
 
   createSession: () => {
     const session = makeSession(get().catalog);
@@ -105,6 +117,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ),
       isStreaming: true,
       error: null,
+      toolStatus: null,
     }));
 
     // Auto-title: use first few words of first user message
@@ -135,6 +148,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             : s
         ),
         isStreaming: false,
+        toolStatus: null,
       }));
     } catch (err: any) {
       set((state) => ({
@@ -156,6 +170,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         ),
         isStreaming: false,
         error: err.message || 'Chat error',
+        toolStatus: null,
       }));
     }
   },
@@ -173,7 +188,34 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           s.id === activeSessionId ? { ...s, messages: [] } : s
         ),
         error: null,
+        toolStatus: null,
       }));
     }
   },
 }));
+
+// Subscribe to progress events from Python backend
+if (typeof window !== 'undefined' && (window as any).icetop?.chat?.onProgress) {
+  (window as any).icetop.chat.onProgress((params: any) => {
+    const store = useChatStore.getState();
+    if (!store.isStreaming) return;
+
+    let status: string | null = null;
+
+    if (params.type === 'tool_start') {
+      const label = TOOL_LABELS[params.tool] || `🔧 ${params.tool}`;
+      const argStr = params.args && Object.keys(params.args).length > 0
+        ? ` (${Object.values(params.args).join(', ')})`
+        : '';
+      status = `${label}${argStr}…`;
+    } else if (params.type === 'thinking') {
+      status = `💭 ${params.message}`;
+    } else if (params.type === 'tool_done') {
+      status = `✅ ${TOOL_LABELS[params.tool] || params.tool} done`;
+    }
+
+    if (status) {
+      useChatStore.setState({ toolStatus: status });
+    }
+  });
+}

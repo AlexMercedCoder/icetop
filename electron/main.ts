@@ -89,6 +89,10 @@ const setupIPC = () => {
     return pythonManager?.sendRequest('execute_cell', { catalog, code });
   });
 
+  ipcMain.handle('notebook:listPackages', async () => {
+    return pythonManager?.sendRequest('list_packages', {});
+  });
+
   // Settings operations
   ipcMain.handle('settings:get', async () => {
     return pythonManager?.sendRequest('get_settings', {});
@@ -110,6 +114,13 @@ app.whenReady().then(async () => {
   // Start Python backend
   pythonManager = new PythonManager();
   await pythonManager.start();
+
+  // Forward Python notifications to renderer
+  pythonManager.onNotification((notification, params) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(notification, params);
+    }
+  });
 
   setupIPC();
   createWindow();

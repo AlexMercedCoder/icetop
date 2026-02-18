@@ -261,4 +261,23 @@
     padding: 0;
     border-radius: $border-radius-md;
   }
+
+  &__tool-status {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    margin-top: $space-2;
+    min-height: 20px;
+  }
+
+  &__tool-label {
+    font-size: $font-size-xs;
+    color: var(--accent-primary);
+    animation: toolPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes toolPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
 }

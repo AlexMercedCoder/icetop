@@ -2,6 +2,8 @@ import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+type NotificationHandler = (notification: string, params: any) => void;
+
 interface PendingRequest {
   resolve: (value: any) => void;
   reject: (reason: any) => void;
@@ -15,6 +17,11 @@ export class PythonManager {
   private restartCount: number = 0;
   private maxRestarts: number = 3;
   private requestTimeoutMs: number = 60000; // 1 minute for long queries
+  private notificationHandler: NotificationHandler | null = null;
+
+  onNotification(handler: NotificationHandler): void {
+    this.notificationHandler = handler;
+  }
 
   async start(): Promise<void> {
     const serverPath = path.join(__dirname, '..', 'python', 'server.py');
@@ -87,15 +94,23 @@ export class PythonManager {
     for (const line of lines) {
       if (!line.trim()) continue;
       try {
-        const response = JSON.parse(line);
-        const pending = this.pendingRequests.get(response.id);
+        const msg = JSON.parse(line);
+
+        // Handle notification messages (no id, has notification field)
+        if (msg.notification && this.notificationHandler) {
+          this.notificationHandler(msg.notification, msg.params || {});
+          continue;
+        }
+
+        // Handle normal JSON-RPC responses
+        const pending = this.pendingRequests.get(msg.id);
         if (pending) {
           clearTimeout(pending.timeout);
-          this.pendingRequests.delete(response.id);
-          if (response.error) {
-            pending.reject(new Error(response.error.message || 'Unknown error'));
+          this.pendingRequests.delete(msg.id);
+          if (msg.error) {
+            pending.reject(new Error(msg.error.message || 'Unknown error'));
           } else {
-            pending.resolve(response.result);
+            pending.resolve(msg.result);
           }
         }
       } catch (err) {

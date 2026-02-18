@@ -16,10 +16,15 @@ CONFIG_PATH = Path.home() / ".icetop" / "config.json"
 TOOLS = [
     {
         "name": "list_namespaces",
-        "description": "List all namespaces (schemas/databases) in the Iceberg catalog.",
+        "description": "List all namespaces (schemas/databases) in the Iceberg catalog, recursively including sub-namespaces. Returns a flat list with fully-qualified namespace paths.",
         "parameters": {
             "type": "object",
-            "properties": {},
+            "properties": {
+                "parent": {
+                    "type": "string",
+                    "description": "Optional parent namespace to list children of. Omit to list all namespaces recursively.",
+                }
+            },
             "required": [],
         },
     },
@@ -158,18 +163,44 @@ def _parse_table_list(tables):
     return result
 
 
-def execute_tool(ice, tool_name: str, args: dict) -> str:
+def _list_namespaces_recursive(ice, parent=None) -> list[str]:
+    """Recursively list all namespaces."""
+    result = []
+    try:
+        if parent:
+            namespaces = ice.list_namespaces(parent)
+        else:
+            namespaces = ice.list_namespaces()
+
+        for ns in namespaces:
+            fqn = ".".join(ns) if isinstance(ns, (tuple, list)) else str(ns)
+            result.append(fqn)
+            # Recurse into children
+            try:
+                children = _list_namespaces_recursive(ice, fqn)
+                result.extend(children)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return result
+
+
+def execute_tool(ice, tool_name: str, args: dict, progress_cb=None) -> str:
     """Execute a tool and return the result as a JSON string."""
+    if progress_cb:
+        progress_cb({"type": "tool_start", "tool": tool_name, "args": args})
+
     try:
         if tool_name == "list_namespaces":
-            namespaces = ice.list_namespaces()
-            ns_list = [".".join(ns) if isinstance(ns, (tuple, list)) else str(ns) for ns in namespaces]
-            return json.dumps({"namespaces": ns_list})
+            parent = args.get("parent")
+            ns_list = _list_namespaces_recursive(ice, parent)
+            result = json.dumps({"namespaces": ns_list})
 
         elif tool_name == "list_tables":
             ns = args.get("namespace", "default")
             tables = ice.list_tables(ns)
-            return json.dumps({"namespace": ns, "tables": _parse_table_list(tables)})
+            result = json.dumps({"namespace": ns, "tables": _parse_table_list(tables)})
 
         elif tool_name == "describe_table":
             table_name = args["table"]
@@ -181,7 +212,7 @@ def execute_tool(ice, tool_name: str, args: dict) -> str:
             ]
             partition_spec = [str(f) for f in tbl.spec().fields] if tbl.spec() else []
             props = dict(tbl.properties) if hasattr(tbl, "properties") else {}
-            return json.dumps({"columns": columns, "partitionSpec": partition_spec, "properties": props})
+            result = json.dumps({"columns": columns, "partitionSpec": partition_spec, "properties": props})
 
         elif tool_name == "read_table":
             table_name = args["table"]
@@ -189,13 +220,24 @@ def execute_tool(ice, tool_name: str, args: dict) -> str:
             filter_expr = args.get("filter_expr")
             limit = min(args.get("limit", 50), 200)
             df = ice.read_table(table_name, columns=columns, filter_expr=filter_expr, limit=limit)
-            return json.dumps({"columns": df.columns, "rows": df.to_dicts(), "rowCount": len(df)})
+            import datetime, decimal
+            rows = df.to_dicts()
+            # Sanitize non-serializable types
+            for row in rows:
+                for k, v in row.items():
+                    if isinstance(v, (datetime.date, datetime.datetime)):
+                        row[k] = v.isoformat()
+                    elif isinstance(v, decimal.Decimal):
+                        row[k] = float(v)
+                    elif isinstance(v, bytes):
+                        row[k] = v.decode('utf-8', errors='replace')
+            result = json.dumps({"columns": df.columns, "rows": rows, "rowCount": len(df)})
 
         elif tool_name == "query_sql":
             sql = args["sql"]
             df = ice.query_datafusion(sql)
             rows = df.to_dicts()
-            return json.dumps({"columns": df.columns, "rows": rows[:200], "rowCount": len(rows)})
+            result = json.dumps({"columns": df.columns, "rows": rows[:200], "rowCount": len(rows)})
 
         elif tool_name == "get_snapshots":
             table_name = args["table"]
@@ -207,7 +249,7 @@ def execute_tool(ice, tool_name: str, args: dict) -> str:
                     "timestamp": str(snap.timestamp_ms),
                     "operation": snap.summary.operation if snap.summary else "unknown",
                 })
-            return json.dumps({"snapshots": snapshots})
+            result = json.dumps({"snapshots": snapshots})
 
         elif tool_name == "get_table_stats":
             table_name = args["table"]
@@ -224,13 +266,18 @@ def execute_tool(ice, tool_name: str, args: dict) -> str:
                 stats["totalRecords"] = s.get("total-records", "unknown")
                 stats["totalDataFiles"] = s.get("total-data-files", "unknown")
                 stats["totalFileSize"] = s.get("total-files-size", "unknown")
-            return json.dumps(stats)
+            result = json.dumps(stats)
 
         else:
-            return json.dumps({"error": f"Unknown tool: {tool_name}"})
+            result = json.dumps({"error": f"Unknown tool: {tool_name}"})
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        result = json.dumps({"error": str(e)})
+
+    if progress_cb:
+        progress_cb({"type": "tool_done", "tool": tool_name})
+
+    return result
 
 
 # ── Provider adapters ─────────────────────────────────────────
@@ -283,12 +330,15 @@ def _openai_tools():
     ]
 
 
-def _run_openai(ice, messages: list, config: dict) -> str:
+def _run_openai(ice, messages: list, config: dict, progress_cb=None) -> str:
     """Run the agent loop using OpenAI's API."""
     from openai import OpenAI
 
     client = OpenAI(api_key=config["apiKey"])
     tools = _openai_tools()
+
+    if progress_cb:
+        progress_cb({"type": "thinking", "message": "Thinking..."})
 
     while True:
         response = client.chat.completions.create(
@@ -321,12 +371,15 @@ def _run_openai(ice, messages: list, config: dict) -> str:
 
             for tc in msg.tool_calls:
                 args = json.loads(tc.function.arguments)
-                result = execute_tool(ice, tc.function.name, args)
+                result = execute_tool(ice, tc.function.name, args, progress_cb)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
                     "content": result,
                 })
+
+            if progress_cb:
+                progress_cb({"type": "thinking", "message": "Analyzing results..."})
             continue
 
         # Model returned a text response — done
@@ -346,7 +399,7 @@ def _anthropic_tools():
     ]
 
 
-def _run_anthropic(ice, messages: list, config: dict) -> str:
+def _run_anthropic(ice, messages: list, config: dict, progress_cb=None) -> str:
     """Run the agent loop using Anthropic's API."""
     import anthropic
 
@@ -361,6 +414,9 @@ def _run_anthropic(ice, messages: list, config: dict) -> str:
             system_text = m["content"]
         else:
             user_messages.append(m)
+
+    if progress_cb:
+        progress_cb({"type": "thinking", "message": "Thinking..."})
 
     while True:
         response = client.messages.create(
@@ -391,13 +447,16 @@ def _run_anthropic(ice, messages: list, config: dict) -> str:
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    result = execute_tool(ice, block.name, block.input)
+                    result = execute_tool(ice, block.name, block.input, progress_cb)
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,
                         "content": result,
                     })
             user_messages.append({"role": "user", "content": tool_results})
+
+            if progress_cb:
+                progress_cb({"type": "thinking", "message": "Analyzing results..."})
             continue
 
         # Model returned text — done
@@ -413,7 +472,7 @@ def _run_anthropic(ice, messages: list, config: dict) -> str:
         return text
 
 
-def _run_google(ice, messages: list, config: dict) -> str:
+def _run_google(ice, messages: list, config: dict, progress_cb=None) -> str:
     """Run the agent loop using Google Generative AI."""
     import google.generativeai as genai
 
@@ -461,6 +520,9 @@ def _run_google(ice, messages: list, config: dict) -> str:
     chat = model.start_chat(history=history[:-1] if history else [])
     last_user = history[-1]["parts"][0] if history else ""
 
+    if progress_cb:
+        progress_cb({"type": "thinking", "message": "Thinking..."})
+
     max_iterations = 10
     for _ in range(max_iterations):
         response = chat.send_message(last_user)
@@ -475,7 +537,7 @@ def _run_google(ice, messages: list, config: dict) -> str:
                 if hasattr(part, "function_call") and part.function_call.name:
                     fn_name = part.function_call.name
                     fn_args = dict(part.function_call.args) if part.function_call.args else {}
-                    result = execute_tool(ice, fn_name, fn_args)
+                    result = execute_tool(ice, fn_name, fn_args, progress_cb)
                     fn_responses.append(
                         genai.protos.Part(
                             function_response=genai.protos.FunctionResponse(
@@ -485,6 +547,9 @@ def _run_google(ice, messages: list, config: dict) -> str:
                         )
                     )
             last_user = fn_responses
+
+            if progress_cb:
+                progress_cb({"type": "thinking", "message": "Analyzing results..."})
             continue
 
         # Text response — done
@@ -503,7 +568,7 @@ class IceTopAgent:
         self.ice = get_iceframe(catalog)
         self.messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    def chat(self, user_message: str) -> str:
+    def chat(self, user_message: str, progress_cb=None) -> str:
         self.messages.append({"role": "user", "content": user_message})
         config = _get_config()
 
@@ -513,11 +578,11 @@ class IceTopAgent:
         provider = config["provider"]
         try:
             if provider == "openai":
-                return _run_openai(self.ice, self.messages, config)
+                return _run_openai(self.ice, self.messages, config, progress_cb)
             elif provider == "anthropic":
-                return _run_anthropic(self.ice, self.messages, config)
+                return _run_anthropic(self.ice, self.messages, config, progress_cb)
             elif provider in ("gemini", "google"):
-                return _run_google(self.ice, self.messages, config)
+                return _run_google(self.ice, self.messages, config, progress_cb)
             else:
                 return f"⚠️ Unknown provider: {provider}. Supported: openai, anthropic, gemini."
         except Exception as e:

@@ -1,8 +1,119 @@
 .notebook-panel {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
   overflow: hidden;
+
+  // ── Notebook sidebar ──────────────────────────
+  &__sidebar {
+    width: 220px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-sidebar);
+    border-right: $border-width solid var(--border-subtle);
+  }
+
+  &__sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-2 $space-3;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: $border-width solid var(--border-subtle);
+  }
+
+  &__sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: $space-1 0;
+  }
+
+  &__sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    transition: background $transition-fast, color $transition-fast;
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    &--active {
+      background: var(--bg-active);
+      color: var(--accent-primary);
+      border-left: 2px solid var(--accent-primary);
+    }
+  }
+
+  &__sidebar-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  &__sidebar-actions {
+    display: flex;
+    gap: $space-1;
+    opacity: 0;
+    transition: opacity $transition-fast;
+
+    .notebook-panel__sidebar-item:hover & {
+      opacity: 1;
+    }
+  }
+
+  &__sidebar-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: $border-radius-sm;
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    &--danger:hover {
+      color: var(--error);
+    }
+  }
+
+  &__rename-input {
+    flex: 1;
+    font-size: $font-size-sm;
+    padding: 1px $space-1;
+    border: 1px solid var(--accent-primary);
+    border-radius: $border-radius-sm;
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    outline: none;
+    min-width: 0;
+  }
+
+  // ── Main area ─────────────────────────────────
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
 
   &__header {
     display: flex;
@@ -40,6 +151,98 @@
       color: var(--accent-primary);
       border-color: var(--accent-primary);
     }
+  }
+
+  // ── Python packages collapsible ──────────────
+  &__packages {
+    border-bottom: $border-width solid var(--border-subtle);
+    background: var(--bg-panel);
+  }
+
+  &__packages-toggle {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    padding: $space-2 $space-4;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+  }
+
+  &__packages-chevron {
+    transition: transform $transition-fast;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__packages-body {
+    padding: 0 $space-4 $space-3;
+  }
+
+  &__packages-search {
+    width: 100%;
+    margin-bottom: $space-2;
+    font-size: $font-size-xs;
+    padding: $space-1 $space-2;
+  }
+
+  &__packages-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: $border-width solid var(--border-subtle);
+    border-radius: $border-radius-sm;
+  }
+
+  &__pkg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $space-1 $space-2;
+    font-size: $font-size-xs;
+    font-family: $font-family-mono;
+
+    &:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    &:hover {
+      background: var(--bg-hover);
+    }
+  }
+
+  &__pkg-name {
+    color: var(--text-primary);
+  }
+
+  &__pkg-version {
+    color: var(--text-muted);
+  }
+
+  &__packages-loading {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: var(--text-muted);
+    padding: $space-2 0;
+  }
+
+  &__packages-empty {
+    font-size: $font-size-xs;
+    color: var(--text-muted);
+    padding: $space-2;
+    text-align: center;
   }
 }
 

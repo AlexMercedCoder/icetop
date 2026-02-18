@@ -57,6 +57,7 @@ class Server:
             "chat_reset": chat.reset,
             "chat_reload": chat.reload,
             "execute_cell": notebook.execute_cell,
+            "list_packages": notebook.list_packages,
             "get_settings": settings.get,
             "update_settings": settings.update,
         }

@@ -23,10 +23,16 @@ contextBridge.exposeInMainWorld('icetop', {
       ipcRenderer.invoke('chat:send', catalog, message, sessionId),
     reset: (sessionId?: string) => ipcRenderer.invoke('chat:reset', sessionId),
     reload: () => ipcRenderer.invoke('chat:reload'),
+    onProgress: (callback: (params: any) => void) => {
+      const handler = (_event: any, params: any) => callback(params);
+      ipcRenderer.on('chat:progress', handler);
+      return () => ipcRenderer.removeListener('chat:progress', handler);
+    },
   },
   notebook: {
     executeCell: (catalog: string, code: string) =>
       ipcRenderer.invoke('notebook:executeCell', catalog, code),
+    listPackages: () => ipcRenderer.invoke('notebook:listPackages'),
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),

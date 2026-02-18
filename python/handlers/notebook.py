@@ -50,3 +50,21 @@ class NotebookHandler:
             "data": result_data,
             "executionTimeMs": elapsed_ms,
         }
+
+    def list_packages(self, params: dict) -> list[dict]:
+        """Return all installed Python packages with their versions."""
+        from importlib.metadata import distributions
+        packages = []
+        for dist in distributions():
+            packages.append({
+                "name": dist.metadata["Name"],
+                "version": dist.metadata["Version"],
+            })
+        # Deduplicate and sort
+        seen = set()
+        unique = []
+        for pkg in sorted(packages, key=lambda p: p["name"].lower()):
+            if pkg["name"] not in seen:
+                seen.add(pkg["name"])
+                unique.append(pkg)
+        return unique

@@ -1,0 +1,256 @@
+.metadata-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-4;
+    background: var(--bg-panel);
+    border-bottom: $border-width solid var(--border-subtle);
+    font-weight: $font-weight-semibold;
+  }
+
+  &__title {
+    font-size: $font-size-md;
+  }
+
+  // ── Lookup bar ────────────────────────────────
+  &__lookup {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-3 $space-4;
+    background: var(--bg-panel);
+    border-bottom: $border-width solid var(--border-subtle);
+  }
+
+  &__catalog-select {
+    width: 140px !important;
+    flex: 0 0 140px;
+    font-size: $font-size-sm;
+  }
+
+  &__table-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: $font-size-sm;
+    font-family: $font-family-mono;
+    width: auto !important;
+  }
+
+  &__load-btn {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    flex-shrink: 0;
+    padding: $space-1 $space-3;
+    font-size: $font-size-sm;
+  }
+
+  // ── Error / Empty ─────────────────────────────
+  &__error {
+    padding: $space-3 $space-4;
+    background: rgba(var(--error-rgb, 220, 53, 69), 0.08);
+    border-bottom: $border-width solid var(--border-subtle);
+  }
+
+  &__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    color: var(--text-muted);
+    text-align: center;
+
+    code {
+      font-family: $font-family-mono;
+      background: var(--bg-hover);
+      padding: 2px $space-1;
+      border-radius: $border-radius-sm;
+      font-size: $font-size-sm;
+    }
+  }
+
+  &__empty-tab {
+    padding: $space-6;
+    text-align: center;
+  }
+
+  // ── Content area ──────────────────────────────
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  // ── Sub-tabs ──────────────────────────────────
+  &__tabs {
+    display: flex;
+    gap: $space-1;
+    padding: $space-2 $space-4;
+    background: var(--bg-panel);
+    border-bottom: $border-width solid var(--border-subtle);
+  }
+
+  &__tab {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    padding: $space-1 $space-3;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    background: none;
+    border: $border-width solid transparent;
+    border-radius: $border-radius-md;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    &--active {
+      color: var(--accent-primary);
+      background: rgba(var(--accent-primary-rgb, 99, 102, 241), 0.1);
+      border-color: var(--accent-primary);
+    }
+  }
+
+  &__badge {
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+
+    .metadata-panel__tab--active & {
+      background: var(--accent-primary);
+      color: #fff;
+    }
+  }
+
+  // ── Tab content ───────────────────────────────
+  &__tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: $space-3 $space-4;
+  }
+
+  &__filter {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: $space-3;
+    font-size: $font-size-xs;
+    padding: $space-1 $space-2;
+  }
+
+  // ── Data tables ───────────────────────────────
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: $font-size-sm;
+
+    th {
+      text-align: left;
+      padding: $space-2 $space-3;
+      font-weight: $font-weight-semibold;
+      color: var(--text-secondary);
+      background: var(--bg-sidebar);
+      border-bottom: 2px solid var(--border-subtle);
+      font-size: $font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    td {
+      padding: $space-2 $space-3;
+      border-bottom: $border-width solid var(--border-subtle);
+      vertical-align: top;
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    code {
+      font-family: $font-family-mono;
+      font-size: $font-size-xs;
+      background: var(--bg-hover);
+      padding: 1px $space-1;
+      border-radius: $border-radius-sm;
+      color: var(--accent-primary);
+    }
+  }
+
+  &__col-name {
+    font-family: $font-family-mono;
+    font-weight: $font-weight-semibold;
+  }
+
+  // ── Snapshots ─────────────────────────────────
+  &__snapshot-list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__snapshot-card {
+    background: var(--bg-panel);
+    border: $border-width solid var(--border-subtle);
+    border-radius: $border-radius-md;
+    padding: $space-3;
+    transition: border-color $transition-fast;
+
+    &:hover {
+      border-color: var(--border);
+    }
+  }
+
+  &__snapshot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $space-1;
+  }
+
+  &__snapshot-op {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__snapshot-id {
+    font-family: $font-family-mono;
+    font-size: $font-size-xs;
+    margin-bottom: $space-2;
+  }
+
+  &__snapshot-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-1;
+  }
+
+  &__snapshot-tag {
+    font-size: 10px;
+    font-family: $font-family-mono;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    padding: 2px $space-2;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Code2, BookOpen } from 'lucide-react';
+import { MessageSquare, Code2, BookOpen, Table2 } from 'lucide-react';
 import './TabBar.scss';
 
 interface TabBarProps {
@@ -11,6 +11,7 @@ const tabs = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'sql', label: 'SQL', icon: Code2 },
   { id: 'notebook', label: 'Notebook', icon: BookOpen },
+  { id: 'metadata', label: 'Metadata', icon: Table2 },
 ];
 
 export const TabBar: React.FC<TabBarProps> = ({ activeView, onViewChange }) => {

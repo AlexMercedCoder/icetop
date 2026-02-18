@@ -78,7 +78,8 @@ class CatalogHandler:
         catalog = params["catalog"]
         table = params["table"]
         ice = get_iceframe(catalog)
-        tbl = ice.get_table(table)
+        # Use the PyIceberg catalog directly to avoid IceFrame tuple issues
+        tbl = ice.catalog.load_table(tuple(table.split(".")))
         schema = tbl.schema()
         columns = [
             {
@@ -91,19 +92,29 @@ class CatalogHandler:
         ]
         partition_spec = [str(field) for field in tbl.spec().fields] if tbl.spec() else []
         properties = dict(tbl.properties) if hasattr(tbl, "properties") else {}
-        return {"columns": columns, "partitionSpec": partition_spec, "properties": properties}
+
+        # Include snapshots in the same response (same table object, no second load)
+        snapshots = []
+        try:
+            if hasattr(tbl, "metadata") and tbl.metadata and hasattr(tbl.metadata, "snapshots") and tbl.metadata.snapshots:
+                for snap in tbl.metadata.snapshots:
+                    snapshots.append({
+                        "snapshotId": str(snap.snapshot_id),
+                        "timestamp": str(snap.timestamp_ms),
+                        "operation": snap.summary.operation if snap.summary else "unknown",
+                        "summary": dict(snap.summary) if snap.summary else {},
+                    })
+        except Exception:
+            pass  # Snapshots not available for this catalog type
+
+        return {
+            "columns": columns,
+            "partitionSpec": partition_spec,
+            "properties": properties,
+            "snapshots": snapshots,
+        }
 
     def get_snapshots(self, params: dict) -> list[dict]:
-        catalog = params["catalog"]
-        table = params["table"]
-        ice = get_iceframe(catalog)
-        tbl = ice.get_table(table)
-        snapshots = []
-        for snap in tbl.metadata.snapshots:
-            snapshots.append({
-                "snapshotId": str(snap.snapshot_id),
-                "timestamp": str(snap.timestamp_ms),
-                "operation": snap.summary.operation if snap.summary else "unknown",
-                "summary": dict(snap.summary) if snap.summary else {},
-            })
-        return snapshots
+        """Legacy endpoint — now included in describe_table response."""
+        result = self.describe_table(params)
+        return result.get("snapshots", [])

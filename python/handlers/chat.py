@@ -1,6 +1,8 @@
 """
-Chat handler — manages AI chat sessions using the custom IceTop agent.
+Chat handler — manages AI chat sessions with streaming progress notifications.
 """
+import json
+import sys
 from handlers.agent import IceTopAgent
 
 
@@ -18,7 +20,20 @@ class ChatHandler:
             self._sessions[session_id] = IceTopAgent(catalog)
 
         agent = self._sessions[session_id]
-        return agent.chat(message)
+
+        def progress_cb(event: dict):
+            """Write a JSON-RPC notification (no id) to stdout for progress events."""
+            notification = {
+                "notification": "chat:progress",
+                "params": {
+                    "sessionId": session_id,
+                    **event,
+                },
+            }
+            sys.stdout.write(json.dumps(notification) + "\n")
+            sys.stdout.flush()
+
+        return agent.chat(message, progress_cb=progress_cb)
 
     def reset(self, params: dict) -> dict:
         session_id = params.get("sessionId")

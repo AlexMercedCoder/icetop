@@ -1,0 +1,35 @@
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: $status-bar-height;
+  padding: 0 $space-3;
+  background: var(--bg-sidebar);
+  border-top: $border-width solid var(--border-subtle);
+  font-size: $font-size-xs;
+  color: var(--text-muted);
+
+  &__left,
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__indicator {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    color: var(--text-muted);
+
+    &--connected {
+      color: var(--success);
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+  }
+}

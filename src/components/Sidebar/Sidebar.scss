@@ -1,0 +1,100 @@
+.sidebar {
+  width: $sidebar-width;
+  min-width: $sidebar-width;
+  height: 100%;
+  background: var(--bg-sidebar);
+  border-right: $border-width solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  transition: width $transition-normal, min-width $transition-normal;
+
+  &--collapsed {
+    width: $sidebar-width-collapsed;
+    min-width: $sidebar-width-collapsed;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-3 $space-3;
+    border-bottom: $border-width solid var(--border-subtle);
+    height: $toolbar-height;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__logo {
+    color: var(--accent-primary);
+  }
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  &__toggle {
+    flex-shrink: 0;
+  }
+
+  &__section-label {
+    padding: $space-3 $space-4 $space-1;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__tree {
+    flex: 1;
+    padding: $space-1 $space-2;
+    overflow-y: auto;
+  }
+
+  &__status {
+    padding: $space-3 $space-3;
+    font-size: $font-size-sm;
+    color: var(--text-muted);
+  }
+
+  &__footer {
+    border-top: $border-width solid var(--border-subtle);
+    padding: $space-2;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__nav-btn {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    &--active {
+      background: var(--bg-active);
+      color: var(--accent-primary);
+    }
+  }
+}

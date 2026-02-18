@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+python/__pycache__/
+python/**/__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build output
+dist/
+dist-electron/
+out/
+build/
+*.tsbuildinfo
+
+# Environment & credentials
+.env
+.env.*
+*.key
+*.pem
+*.secret
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing scripts
+test_*.py
+scratch_*.py
+scratch_*.ts
+adhoc_*.py
+adhoc_*.ts
+temp_*.py
+temp_*.ts
+
+# Electron
+*.asar
+
+# Python eggs/dist
+*.egg-info/
+dist/
+*.egg
+
+# Coverage
+coverage/
+.nyc_output/
+htmlcov/
+.coverage

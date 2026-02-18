@@ -1,0 +1,197 @@
+@use 'sass:color';
+@use 'reset';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+// ============================================================
+// Theme Variables (CSS Custom Properties)
+// ============================================================
+
+:root[data-theme="dark"],
+:root {
+  --bg-app:        #{$navy-900};
+  --bg-sidebar:    #{$navy-800};
+  --bg-panel:      #{$navy-700};
+  --bg-card:       #{$navy-600};
+  --bg-input:      #{$navy-800};
+  --bg-hover:      #{$navy-500};
+  --bg-active:     #{$navy-600};
+
+  --text-primary:  #{$gray-100};
+  --text-secondary: #{$navy-200};
+  --text-muted:    #{$navy-300};
+
+  --border:        #{$navy-400};
+  --border-subtle: #{$navy-600};
+
+  --accent-primary:   #{$yellow-500};
+  --accent-secondary: #{$orange-500};
+
+  --success: #{$success};
+  --error:   #{$error};
+  --warning: #{$warning};
+  --info:    #{$info};
+}
+
+:root[data-theme="light"] {
+  --bg-app:        #{$gray-50};
+  --bg-sidebar:    #{$white};
+  --bg-panel:      #{$white};
+  --bg-card:       #{$navy-50};
+  --bg-input:      #{$white};
+  --bg-hover:      #{$navy-50};
+  --bg-active:     #{$navy-100};
+
+  --text-primary:  #{$navy-900};
+  --text-secondary: #{$navy-400};
+  --text-muted:    #{$navy-300};
+
+  --border:        #{$navy-100};
+  --border-subtle: #{$gray-200};
+
+  --accent-primary:   #{$yellow-500};
+  --accent-secondary: #{$orange-500};
+
+  --success: #{$success};
+  --error:   #{$error};
+  --warning: #{$warning};
+  --info:    #{$info};
+}
+
+// ============================================================
+// Global Styles
+// ============================================================
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: $font-family-sans;
+  font-size: $font-size-base;
+  color: var(--text-primary);
+  background: var(--bg-app);
+}
+
+code, pre, .monaco-editor {
+  font-family: $font-family-mono;
+}
+
+// ============================================================
+// Utility classes
+// ============================================================
+
+.text-muted    { color: var(--text-muted); }
+.text-accent   { color: var(--accent-primary); }
+.text-error    { color: var(--error); }
+.text-success  { color: var(--success); }
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ============================================================
+// Button base
+// ============================================================
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: none;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+  transition: background-color $transition-fast, transform 80ms ease;
+
+  &:active { transform: scale(0.97); }
+
+  &--primary {
+    background: var(--accent-primary);
+    color: $navy-900;
+    &:hover { background: $yellow-400; }
+  }
+
+  &--secondary {
+    background: var(--accent-secondary);
+    color: $white;
+    &:hover { background: $orange-400; }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+  }
+
+  &--danger {
+    background: var(--error);
+    color: $white;
+    &:hover { background: color.adjust($error, $lightness: 8%); }
+  }
+
+  &--sm {
+    padding: $space-1 $space-2;
+    font-size: $font-size-xs;
+  }
+}
+
+// ============================================================
+// Input base
+// ============================================================
+
+.input {
+  width: 100%;
+  padding: $space-2 $space-3;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: $border-width solid var(--border-subtle);
+  border-radius: $border-radius-md;
+  font-size: $font-size-md;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+select.input {
+  appearance: none;
+  cursor: pointer;
+}
+
+// ============================================================
+// Scrollable containers
+// ============================================================
+
+.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+}

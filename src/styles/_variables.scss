@@ -1,0 +1,101 @@
+// ============================================================
+// IceTop Design Tokens — Flat Vector SASS Style
+// Navy Blue primary with Yellow & Orange accents
+// ============================================================
+
+// ----- Primary (Navy) -----
+$navy-900: #0A1628;
+$navy-800: #0F1F38;
+$navy-700: #162A4A;
+$navy-600: #1D365C;
+$navy-500: #25436E;
+$navy-400: #3A5A8C;
+$navy-300: #5B7AAF;
+$navy-200: #8BA3CC;
+$navy-100: #C5D3E8;
+$navy-50:  #E8EEF5;
+
+// ----- Accent: Yellow -----
+$yellow-500: #F5A623;
+$yellow-400: #F7B84D;
+$yellow-300: #F9CA77;
+$yellow-200: #FBDCA1;
+$yellow-100: #FEEED0;
+
+// ----- Accent: Orange -----
+$orange-500: #E8713A;
+$orange-400: #EC8D5E;
+$orange-300: #F0A982;
+$orange-200: #F5C5A6;
+$orange-100: #FAE2D3;
+
+// ----- Semantic -----
+$success:  #2ECC71;
+$error:    #E74C3C;
+$warning:  $orange-500;
+$info:     $navy-300;
+
+// ----- Neutrals -----
+$gray-900: #1A1A2E;
+$gray-800: #2D2D44;
+$gray-700: #44445A;
+$gray-600: #5C5C72;
+$gray-500: #7A7A8E;
+$gray-400: #9999AA;
+$gray-300: #B8B8C6;
+$gray-200: #D4D4DE;
+$gray-100: #EBEBF0;
+$gray-50:  #F5F5F8;
+$white:    #FFFFFF;
+
+// ----- Typography -----
+$font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+$font-size-xs:   0.6875rem;
+$font-size-sm:   0.75rem;
+$font-size-base: 0.8125rem;
+$font-size-md:   0.875rem;
+$font-size-lg:   1rem;
+$font-size-xl:   1.25rem;
+$font-size-2xl:  1.5rem;
+
+$font-weight-normal:   400;
+$font-weight-medium:   500;
+$font-weight-semibold: 600;
+$font-weight-bold:     700;
+
+$line-height-tight:  1.25;
+$line-height-normal: 1.5;
+$line-height-loose:  1.75;
+
+// ----- Spacing (4px base) -----
+$space-1:  4px;
+$space-2:  8px;
+$space-3:  12px;
+$space-4:  16px;
+$space-5:  20px;
+$space-6:  24px;
+$space-8:  32px;
+$space-10: 40px;
+$space-12: 48px;
+
+// ----- Layout -----
+$sidebar-width:           260px;
+$sidebar-width-collapsed: 48px;
+$toolbar-height:          40px;
+$tab-height:              36px;
+$status-bar-height:       24px;
+$panel-min-width:         300px;
+
+// ----- Borders -----
+$border-radius-sm: 4px;
+$border-radius-md: 6px;
+$border-radius-lg: 8px;
+$border-radius-xl: 12px;
+$border-width:     1px;
+
+// ----- Transitions -----
+$transition-fast:   120ms ease;
+$transition-normal: 200ms ease;
+$transition-slow:   300ms ease-in-out;

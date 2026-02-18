@@ -1,0 +1,55 @@
+.settings-panel {
+  padding: $space-6;
+  max-width: 640px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $space-6;
+
+    h2 {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+}
+
+.settings-section {
+  margin-bottom: $space-8;
+  padding-bottom: $space-6;
+  border-bottom: $border-width solid var(--border-subtle);
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $space-1;
+  }
+
+  &__desc {
+    font-size: $font-size-sm;
+    color: var(--text-muted);
+    margin-bottom: $space-4;
+  }
+}
+
+.settings-field {
+  margin-bottom: $space-4;
+
+  &__label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+    margin-bottom: $space-1;
+  }
+}

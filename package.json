@@ -1,6 +1,6 @@
 {
   "name": "icetop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Desktop UI for querying and monitoring Apache Iceberg catalogs via IceFrame",
   "main": "dist-electron/main.js",
   "scripts": {

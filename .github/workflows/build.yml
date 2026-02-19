@@ -17,17 +17,17 @@ jobs:
         include:
           # macOS ARM (Apple Silicon)
           - os: macos-latest
-            platform: darwin
+            platform: mac
             arch: arm64
             python-version: '3.11'
           # macOS Intel (x64)
           - os: macos-latest
-            platform: darwin
+            platform: mac
             arch: x64
             python-version: '3.11'
           # Windows
           - os: windows-latest
-            platform: win32
+            platform: win
             arch: x64
             python-version: '3.11'
           # Linux (use 22.04 for broader glibc compatibility)
@@ -121,16 +121,19 @@ jobs:
         run: |
           mkdir -p build/icon.iconset
           for size in 16 32 64 128 256 512; do
-            sips -z $size $size build/icon.png --out build/icon.iconset/icon_${size}x${size}.png
+            sips -s format png -z $size $size build/icon.png --out build/icon.iconset/icon_${size}x${size}.png
             double=$((size * 2))
             if [ $double -le 1024 ]; then
-              sips -z $double $double build/icon.png --out build/icon.iconset/icon_${size}x${size}@2x.png
+              sips -s format png -z $double $double build/icon.png --out build/icon.iconset/icon_${size}x${size}@2x.png
             fi
           done
           iconutil -c icns build/icon.iconset -o build/icon.icns
 
       - name: Install npm dependencies
         run: npm ci
+
+      - name: Build JS/Electron
+        run: npm run build
 
       - name: Install Linux packaging tools
         if: matrix.platform == 'linux'

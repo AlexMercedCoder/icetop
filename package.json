@@ -1,6 +1,10 @@
 {
   "name": "icetop",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "author": {
+    "name": "Alex Merced",
+    "email": "alex@alexmerced.com"
+  },
   "description": "Desktop UI for querying and monitoring Apache Iceberg catalogs via IceFrame",
   "main": "dist-electron/main.js",
   "scripts": {

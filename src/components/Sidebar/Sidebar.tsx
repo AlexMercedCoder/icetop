@@ -55,6 +55,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
           </div>
 
           <div className="sidebar__footer">
+            <a
+              href="https://www.dremio.com/get-started/?utm_source=icetop_app&utm_medium=influencer&utm_campaign=iceberg&utm_term=icetop_app-02-19-2026&utm_content=alexmerced"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sidebar__nav-btn sidebar__nav-btn--cta"
+              title="Get a free Iceberg Catalog from Dremio"
+            >
+              <Database size={16} />
+              <span>Get Free Catalog</span>
+            </a>
             <button
               className={`sidebar__nav-btn ${activeView === 'docs' ? 'sidebar__nav-btn--active' : ''}`}
               onClick={() => onViewChange('docs')}

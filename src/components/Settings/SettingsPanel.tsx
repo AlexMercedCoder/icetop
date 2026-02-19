@@ -162,7 +162,7 @@ export const SettingsPanel: React.FC = () => {
           />
         </div>
 
-        <div className="settings-field">
+      <div className="settings-field">
           <label className="settings-field__label">Theme</label>
           <select
             className="input"

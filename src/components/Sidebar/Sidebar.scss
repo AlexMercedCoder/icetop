@@ -32,6 +32,17 @@
     color: var(--accent-primary);
   }
 
+  &__nav-btn--cta {
+    background-color: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary) !important;
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    margin-bottom: $space-2;
+
+    &:hover {
+      background-color: rgba(var(--primary-rgb), 0.2);
+    }
+  }
+
   &__title {
     font-size: $font-size-lg;
     font-weight: $font-weight-bold;

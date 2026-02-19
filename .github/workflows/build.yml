@@ -151,13 +151,13 @@ jobs:
         with:
           name: installer-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            out/**/*.dmg
-            out/**/*.zip
-            out/**/*.exe
-            out/**/*.nsis
-            out/**/*.deb
-            out/**/*.AppImage
-            out/**/*.rpm
+            out/*.dmg
+            out/*.zip
+            out/*.exe
+            out/*.nsis
+            out/*.deb
+            out/*.AppImage
+            out/*.rpm
           if-no-files-found: warn
 
   release:

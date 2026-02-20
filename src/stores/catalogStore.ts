@@ -3,11 +3,13 @@ import type { CatalogNode, TableSchema, Snapshot } from '../types/catalog';
 
 interface CatalogStore {
   catalogs: CatalogNode[];
+  activeCatalog: string;
   selectedNode: CatalogNode | null;
   isLoading: boolean;
   error: string | null;
 
   setCatalogs: (catalogs: CatalogNode[]) => void;
+  setActiveCatalog: (catalog: string) => void;
   setSelectedNode: (node: CatalogNode | null) => void;
   toggleExpanded: (fullyQualifiedName: string) => void;
   setChildren: (parentFQN: string, children: CatalogNode[]) => void;
@@ -40,11 +42,13 @@ const updateNodeInTree = (
 
 export const useCatalogStore = create<CatalogStore>((set, get) => ({
   catalogs: [],
+  activeCatalog: '',
   selectedNode: null,
   isLoading: false,
   error: null,
 
   setCatalogs: (catalogs) => set({ catalogs }),
+  setActiveCatalog: (catalog) => set({ activeCatalog: catalog }),
   setSelectedNode: (node) => set({ selectedNode: node }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -79,7 +83,12 @@ export const useCatalogStore = create<CatalogStore>((set, get) => ({
         children: [],
         isExpanded: false,
       }));
-      set({ catalogs, isLoading: false });
+      // Auto-select the first catalog if none is active
+      const currentActive = get().activeCatalog;
+      const activeCatalog = (currentActive && names.includes(currentActive))
+        ? currentActive
+        : (names[0] || '');
+      set({ catalogs, activeCatalog, isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to load catalogs', isLoading: false });
     }

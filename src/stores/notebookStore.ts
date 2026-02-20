@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuid } from 'uuid';
 import type { Notebook, NotebookCell, CellOutput } from '../types/notebook';
+import { useCatalogStore } from './catalogStore';
 
 interface NotebookStore {
   notebooks: Notebook[];
@@ -50,11 +51,12 @@ const updateNb = (
 ): Notebook[] => notebooks.map((nb) => (nb.id === id ? updater(nb) : nb));
 
 export const useNotebookStore = create<NotebookStore>((set, get) => {
-  const initial = makeNotebook('dremio');
+  const initialCatalog = useCatalogStore.getState().activeCatalog || '';
+  const initial = makeNotebook(initialCatalog);
   return {
     notebooks: [initial],
     activeNotebookId: initial.id,
-    catalog: 'dremio',
+    catalog: initialCatalog,
 
     // ── Notebook CRUD ───────────────────────────────
 
@@ -229,8 +231,9 @@ export const useNotebookStore = create<NotebookStore>((set, get) => {
       }));
 
       try {
+        const activeCatalog = useCatalogStore.getState().activeCatalog;
         const result: CellOutput = await (window as any).icetop.notebook.executeCell(
-          nb.catalog,
+          activeCatalog,
           cell.source
         );
         set((state) => ({

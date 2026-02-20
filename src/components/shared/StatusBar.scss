@@ -32,4 +32,37 @@
     align-items: center;
     gap: $space-1;
   }
+
+  &__catalog-selector {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    color: var(--accent-primary);
+  }
+
+  &__catalog-select {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: $border-radius-sm;
+    color: var(--text-primary);
+    font-size: $font-size-xs;
+    font-family: inherit;
+    padding: 1px $space-2 1px $space-1;
+    cursor: pointer;
+    outline: none;
+    appearance: auto;
+
+    &:hover {
+      border-color: var(--accent-primary);
+    }
+
+    &:focus {
+      border-color: var(--accent-primary);
+    }
+
+    option {
+      background: var(--bg-panel);
+      color: var(--text-primary);
+    }
+  }
 }

@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNotebookStore } from '../../stores/notebookStore';
+import { useCatalogStore } from '../../stores/catalogStore';
 import {
   Plus, Play, Trash2, ChevronUp, ChevronDown,
   FileCode, Type, Loader2, Package, ChevronRight,
-  Download, FileText, Pencil,
+  Download, FileText, Pencil, Code2, GripVertical,
 } from 'lucide-react';
+import { snippets, Snippet } from '../../data/snippets';
 import './Notebook.scss';
 
 interface PkgInfo {
@@ -14,12 +16,13 @@ interface PkgInfo {
 
 export const NotebookPanel: React.FC = () => {
   const {
-    notebooks, activeNotebookId, catalog,
+    notebooks, activeNotebookId,
     createNotebook, switchNotebook, deleteNotebook,
     renameNotebook, exportNotebook,
     addCell, removeCell, updateCellSource, executeCell,
     moveCell, clearOutputs,
   } = useNotebookStore();
+  const catalog = useCatalogStore((s) => s.activeCatalog);
 
   const activeNotebook = notebooks.find((n) => n.id === activeNotebookId);
   const cells = activeNotebook?.cells ?? [];
@@ -69,15 +72,34 @@ export const NotebookPanel: React.FC = () => {
     ? packages.filter((p) => p.name.toLowerCase().includes(pkgFilter.toLowerCase()))
     : packages;
 
+  // ── Snippets state ──
+  const [snippetsOpen, setSnippetsOpen] = useState(true);
+  const [snippetFilter, setSnippetFilter] = useState('');
+
+  const filteredSnippets = snippetFilter
+    ? snippets.filter((s) =>
+        s.title.toLowerCase().includes(snippetFilter.toLowerCase()) ||
+        s.category.toLowerCase().includes(snippetFilter.toLowerCase())
+      )
+    : snippets;
+
+  const groupedSnippets = filteredSnippets.reduce<Record<string, Snippet[]>>((acc, s) => {
+    (acc[s.category] ??= []).push(s);
+    return acc;
+  }, {});
+
   // ── Drag & Drop ──
   const handleDrop = (e: React.DragEvent, cellId: string) => {
     e.preventDefault();
+    const snippetCode = e.dataTransfer.getData('text/icetop-snippet');
     const tableName = e.dataTransfer.getData('text/icetop-table');
-    if (tableName) {
-      const cell = cells.find((c) => c.id === cellId);
-      if (cell) {
-        updateCellSource(cellId, cell.source + `ice.read_table("${tableName}")`);
-      }
+    const cell = cells.find((c) => c.id === cellId);
+    if (!cell) return;
+
+    if (snippetCode) {
+      updateCellSource(cellId, snippetCode);
+    } else if (tableName) {
+      updateCellSource(cellId, cell.source + `ice.read_table("${tableName}")`);
     }
   };
 
@@ -157,6 +179,57 @@ export const NotebookPanel: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Snippets */}
+        <div className="notebook-panel__snippets-section">
+          <button
+            className="notebook-panel__snippets-toggle"
+            onClick={() => setSnippetsOpen(!snippetsOpen)}
+          >
+            <ChevronRight
+              size={14}
+              className={`notebook-panel__snippets-chevron ${snippetsOpen ? 'notebook-panel__snippets-chevron--open' : ''}`}
+            />
+            <Code2 size={14} />
+            <span>Snippets</span>
+          </button>
+          {snippetsOpen && (
+            <div className="notebook-panel__snippets-body">
+              <input
+                className="notebook-panel__snippets-search input"
+                type="text"
+                placeholder="Filter snippets…"
+                value={snippetFilter}
+                onChange={(e) => setSnippetFilter(e.target.value)}
+              />
+              <div className="notebook-panel__snippets-list scrollable">
+                {Object.entries(groupedSnippets).map(([category, items]) => (
+                  <div key={category}>
+                    <div className="notebook-panel__snippets-category">{category}</div>
+                    {items.map((snippet) => (
+                      <div
+                        key={snippet.id}
+                        className="notebook-panel__snippet-item"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/icetop-snippet', snippet.code);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                        title={snippet.description + '\n\nDrag into a notebook cell'}
+                      >
+                        <GripVertical size={12} className="notebook-panel__snippet-grip" />
+                        <span>{snippet.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {filteredSnippets.length === 0 && (
+                  <div className="notebook-panel__snippets-empty">No matching snippets</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

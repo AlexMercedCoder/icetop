@@ -1,11 +1,13 @@
 import React from 'react';
 import { useCatalogStore } from '../../stores/catalogStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { Circle } from 'lucide-react';
+import { Circle, Database } from 'lucide-react';
 import './StatusBar.scss';
 
 export const StatusBar: React.FC = () => {
   const catalogs = useCatalogStore((s) => s.catalogs);
+  const activeCatalog = useCatalogStore((s) => s.activeCatalog);
+  const setActiveCatalog = useCatalogStore((s) => s.setActiveCatalog);
   const settings = useSettingsStore((s) => s.settings);
 
   const catalogCount = catalogs.length;
@@ -18,6 +20,22 @@ export const StatusBar: React.FC = () => {
           <Circle size={8} fill="currentColor" />
           {isConnected ? `${catalogCount} catalog${catalogCount > 1 ? 's' : ''}` : 'Disconnected'}
         </span>
+        {catalogCount > 0 && (
+          <span className="status-bar__catalog-selector">
+            <Database size={12} />
+            <select
+              className="status-bar__catalog-select"
+              value={activeCatalog}
+              onChange={(e) => setActiveCatalog(e.target.value)}
+            >
+              {catalogs.map((cat) => (
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </span>
+        )}
       </div>
       <div className="status-bar__right">
         <span className="status-bar__item">

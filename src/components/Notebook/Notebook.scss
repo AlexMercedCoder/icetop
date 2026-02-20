@@ -244,6 +244,100 @@
     padding: $space-2;
     text-align: center;
   }
+
+  // ── Snippets section ────────────────────────────
+  &__snippets-section {
+    border-top: $border-width solid var(--border-subtle);
+  }
+
+  &__snippets-toggle {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    padding: $space-2 $space-3;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+  }
+
+  &__snippets-chevron {
+    transition: transform $transition-fast;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__snippets-body {
+    padding: 0 $space-3 $space-2;
+  }
+
+  &__snippets-search {
+    width: 100%;
+    margin-bottom: $space-2;
+    font-size: $font-size-xs;
+    padding: $space-1 $space-2;
+  }
+
+  &__snippets-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  &__snippets-category {
+    font-size: 10px;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding: $space-2 $space-1 $space-1;
+  }
+
+  &__snippet-item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-1 $space-2;
+    font-size: $font-size-xs;
+    color: var(--text-secondary);
+    border-radius: $border-radius-sm;
+    cursor: grab;
+    transition: background $transition-fast, color $transition-fast;
+    user-select: none;
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--accent-primary);
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__snippet-grip {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  &__snippets-empty {
+    font-size: $font-size-xs;
+    color: var(--text-muted);
+    padding: $space-2;
+    text-align: center;
+  }
 }
 
 .notebook-cell {

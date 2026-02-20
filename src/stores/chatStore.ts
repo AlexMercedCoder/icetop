@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { v4 as uuid } from 'uuid';
 import type { ChatMessage, ChatSession } from '../types/chat';
+import { useCatalogStore } from './catalogStore';
 
 interface ChatStore {
   sessions: ChatSession[];
   activeSessionId: string | null;
-  catalog: string;
   isStreaming: boolean;
   error: string | null;
   toolStatus: string | null;
@@ -16,7 +16,7 @@ interface ChatStore {
   deleteSession: (sessionId: string) => void;
   renameSession: (sessionId: string, title: string) => void;
 
-  setCatalog: (catalog: string) => void;
+
   sendMessage: (content: string) => Promise<void>;
   resetConversation: () => Promise<void>;
 }
@@ -42,13 +42,13 @@ const makeSession = (catalog: string): ChatSession => ({
 export const useChatStore = create<ChatStore>((set, get) => ({
   sessions: [],
   activeSessionId: null,
-  catalog: 'dremio',
   isStreaming: false,
   error: null,
   toolStatus: null,
 
   createSession: () => {
-    const session = makeSession(get().catalog);
+    const catalog = useCatalogStore.getState().activeCatalog;
+    const session = makeSession(catalog);
     set((state) => ({
       sessions: [session, ...state.sessions],
       activeSessionId: session.id,
@@ -80,10 +80,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }));
   },
 
-  setCatalog: (catalog) => set({ catalog }),
 
   sendMessage: async (content) => {
-    let { activeSessionId, sessions, catalog } = get();
+    let { activeSessionId, sessions } = get();
+    const catalog = useCatalogStore.getState().activeCatalog;
 
     // Auto-create a session if none exists
     if (!activeSessionId) {

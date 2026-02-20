@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useChatStore } from '../../stores/chatStore';
+import { useCatalogStore } from '../../stores/catalogStore';
 import { Send, RotateCcw, Loader2, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { marked } from 'marked';
 import './Chat.scss';
 
 export const ChatPanel: React.FC = () => {
   const {
-    sessions, activeSessionId, isStreaming, catalog, toolStatus,
+    sessions, activeSessionId, isStreaming, toolStatus,
     sendMessage, resetConversation, createSession,
     switchSession, deleteSession,
   } = useChatStore();
+  const catalog = useCatalogStore((s) => s.activeCatalog);
 
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

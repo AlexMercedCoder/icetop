@@ -52,8 +52,11 @@ export const CatalogTree: React.FC<CatalogTreeProps> = ({ node, depth }) => {
 
   const handleDragStart = (e: React.DragEvent) => {
     if (node.type === 'table') {
-      e.dataTransfer.setData('text/icetop-table', node.fullyQualifiedName);
-      e.dataTransfer.setData('text/plain', node.fullyQualifiedName);
+      // Strip the catalog prefix — the active catalog is managed globally
+      const parts = node.fullyQualifiedName.split('.');
+      const tableRef = parts.slice(1).join('.');
+      e.dataTransfer.setData('text/icetop-table', tableRef);
+      e.dataTransfer.setData('text/plain', tableRef);
       e.dataTransfer.effectAllowed = 'copy';
     }
   };

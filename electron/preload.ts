@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('icetop', {
       ipcRenderer.invoke('catalog:describeTable', catalog, table),
     getSnapshots: (catalog: string, table: string) =>
       ipcRenderer.invoke('catalog:getSnapshots', catalog, table),
+    getFiles: (catalog: string, table: string) =>
+      ipcRenderer.invoke('catalog:getFiles', catalog, table),
   },
   sql: {
     execute: (catalog: string, query: string) =>

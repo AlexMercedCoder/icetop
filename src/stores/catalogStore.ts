@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CatalogNode, TableSchema, Snapshot } from '../types/catalog';
+import type { CatalogNode, TableSchema, Snapshot, TableFile } from '../types/catalog';
 
 interface CatalogStore {
   catalogs: CatalogNode[];
@@ -22,6 +22,7 @@ interface CatalogStore {
   loadChildren: (catalog: string, namespace: string) => Promise<void>;
   describeTable: (catalog: string, table: string) => Promise<TableSchema | null>;
   getSnapshots: (catalog: string, table: string) => Promise<Snapshot[]>;
+  getFiles: (catalog: string, table: string) => Promise<TableFile[]>;
 }
 
 const updateNodeInTree = (
@@ -190,6 +191,14 @@ export const useCatalogStore = create<CatalogStore>((set, get) => ({
   getSnapshots: async (catalog, table) => {
     try {
       return await (window as any).icetop.catalog.getSnapshots(catalog, table);
+    } catch {
+      return [];
+    }
+  },
+
+  getFiles: async (catalog, table) => {
+    try {
+      return await (window as any).icetop.catalog.getFiles(catalog, table);
     } catch {
       return [];
     }

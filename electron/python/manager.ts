@@ -29,7 +29,23 @@ export class PythonManager {
     if (isDev) {
       // Development: run Python source directly
       const serverPath = path.join(__dirname, '..', 'python', 'server.py');
-      this.process = spawn('python3', ['-u', serverPath], {
+      
+      // Try to use local venv if it exists
+      const isWin = process.platform === 'win32';
+      const venvPythonPath = isWin 
+        ? path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe')
+        : path.join(__dirname, '..', 'venv', 'bin', 'python');
+        
+      let pythonExecutable = 'python3';
+      try {
+        if (require('fs').existsSync(venvPythonPath)) {
+          pythonExecutable = venvPythonPath;
+        }
+      } catch (e) {
+        // Fallback to python3
+      }
+
+      this.process = spawn(pythonExecutable, ['-u', serverPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env },
       });

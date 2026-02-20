@@ -51,6 +51,7 @@ class Server:
             "list_children": catalog.list_children,
             "describe_table": catalog.describe_table,
             "get_snapshots": catalog.get_snapshots,
+            "get_files": catalog.get_files,
             "execute_sql": sql.execute,
             "get_query_history": sql.get_history,
             "chat": chat.send,

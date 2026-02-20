@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCatalogStore } from '../../stores/catalogStore';
 import {
   Table2, Columns3, Layers, Settings2, History,
-  Loader2, ChevronRight, Search,
+  Loader2, ChevronRight, Search, FileText
 } from 'lucide-react';
 import './Metadata.scss';
 
@@ -26,7 +26,16 @@ interface SnapshotInfo {
   summary: Record<string, string>;
 }
 
-type MetaTab = 'schema' | 'partitions' | 'properties' | 'snapshots';
+interface TableFileInfo {
+  file_path: string;
+  file_format: string;
+  record_count: number;
+  file_size_in_bytes: number;
+  partition: Record<string, string>;
+}
+
+
+type MetaTab = 'schema' | 'partitions' | 'properties' | 'snapshots' | 'files';
 
 export const MetadataPanel: React.FC = () => {
   const catalogs = useCatalogStore((s) => s.catalogs);
@@ -37,7 +46,10 @@ export const MetadataPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<TableMeta | null>(null);
   const [snapshots, setSnapshots] = useState<SnapshotInfo[]>([]);
-  const [schemaFilter, setSchemaFilter] = useState('');
+  const [files, setFiles] = useState<TableFileInfo[]>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [fileSort, setFileSort] = useState<{ key: keyof TableFileInfo; direction: 'asc' | 'desc' } | null>(null);
+  const [groupByKeys, setGroupByKeys] = useState<string[]>([]);
 
   // Default to first catalog
   useEffect(() => {
@@ -52,6 +64,8 @@ export const MetadataPanel: React.FC = () => {
     setError(null);
     setMeta(null);
     setSnapshots([]);
+    setFiles([]);
+    setGroupByKeys([]);
 
     try {
       const result = await (window as any).icetop.catalog.describeTable(
@@ -60,6 +74,9 @@ export const MetadataPanel: React.FC = () => {
       );
       setMeta(result);
       setSnapshots(result.snapshots || []);
+
+      const fileResult = await useCatalogStore.getState().getFiles(selectedCatalog, tableName.trim());
+      setFiles(fileResult || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load table metadata');
     }
@@ -89,7 +106,9 @@ export const MetadataPanel: React.FC = () => {
   };
 
   const filteredColumns = meta?.columns.filter((c) =>
-    c.name.toLowerCase().includes(schemaFilter.toLowerCase())
+    c.name.toLowerCase().includes(globalFilter.toLowerCase()) ||
+    c.type.toLowerCase().includes(globalFilter.toLowerCase()) ||
+    (c.doc && c.doc.toLowerCase().includes(globalFilter.toLowerCase()))
   );
 
   const metaTabs: { id: MetaTab; label: string; icon: React.ElementType }[] = [
@@ -97,6 +116,7 @@ export const MetadataPanel: React.FC = () => {
     { id: 'partitions', label: 'Partitions', icon: Layers },
     { id: 'properties', label: 'Properties', icon: Settings2 },
     { id: 'snapshots', label: 'Snapshots', icon: History },
+    { id: 'files', label: 'Files', icon: FileText },
   ];
 
   const formatTimestamp = (ms: string) => {
@@ -106,6 +126,92 @@ export const MetadataPanel: React.FC = () => {
       return ms;
     }
   };
+
+  const handleFileSort = (key: keyof TableFileInfo) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (fileSort && fileSort.key === key && fileSort.direction === 'asc') {
+      direction = 'desc';
+    }
+    setFileSort({ key, direction });
+  };
+
+  const partitionKeys = useMemo(() => {
+    const keys = new Set<string>();
+    files.forEach(f => {
+      if (f.partition && typeof f.partition === 'object') {
+        Object.keys(f.partition).forEach(k => keys.add(k));
+      }
+    });
+    return Array.from(keys).sort();
+  }, [files]);
+
+  const processedFiles = useMemo(() => {
+    const lowerFilter = globalFilter.toLowerCase();
+    let result = files.filter(f => {
+      const pStr = f.partition ? JSON.stringify(f.partition).toLowerCase() : '';
+      return f.file_path.toLowerCase().includes(lowerFilter) || pStr.includes(lowerFilter);
+    });
+    if (fileSort !== null) {
+      result.sort((a, b) => {
+        let valA: any = a[fileSort.key];
+        let valB: any = b[fileSort.key];
+        if (fileSort.key === 'partition') {
+          valA = a.partition ? JSON.stringify(a.partition) : '';
+          valB = b.partition ? JSON.stringify(b.partition) : '';
+        }
+        if (valA < valB) return fileSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return fileSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [files, globalFilter, fileSort]);
+
+  const groupedFiles = useMemo(() => {
+    if (groupByKeys.length === 0) return null;
+    const groups: Record<string, typeof processedFiles> = {};
+    processedFiles.forEach(f => {
+      const gKey = groupByKeys.map(k => `${k}=${f.partition?.[k] ?? 'null'}`).join(', ');
+      if (!groups[gKey]) groups[gKey] = [];
+      groups[gKey].push(f);
+    });
+    return groups;
+  }, [processedFiles, groupByKeys]);
+
+  const renderFilesTable = (fileList: TableFileInfo[]) => (
+    <table className="metadata-panel__table" style={{ margin: 0 }}>
+      <thead>
+        <tr>
+          <th onClick={() => handleFileSort('file_path')} style={{ cursor: 'pointer' }}>
+            Path {fileSort?.key === 'file_path' ? (fileSort.direction === 'asc' ? '↑' : '↓') : '↕'}
+          </th>
+          <th onClick={() => handleFileSort('file_format')} style={{ cursor: 'pointer' }}>
+            Format {fileSort?.key === 'file_format' ? (fileSort.direction === 'asc' ? '↑' : '↓') : '↕'}
+          </th>
+          <th onClick={() => handleFileSort('record_count')} style={{ cursor: 'pointer' }}>
+            Records {fileSort?.key === 'record_count' ? (fileSort.direction === 'asc' ? '↑' : '↓') : '↕'}
+          </th>
+          <th onClick={() => handleFileSort('file_size_in_bytes')} style={{ cursor: 'pointer' }}>
+            Size (Bytes) {fileSort?.key === 'file_size_in_bytes' ? (fileSort.direction === 'asc' ? '↑' : '↓') : '↕'}
+          </th>
+          <th onClick={() => handleFileSort('partition')} style={{ cursor: 'pointer' }}>
+            Partition {fileSort?.key === 'partition' ? (fileSort.direction === 'asc' ? '↑' : '↓') : '↕'}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {fileList.map((f, i) => (
+          <tr key={i}>
+            <td style={{ wordBreak: 'break-all', fontSize: '12px' }}><code>{f.file_path}</code></td>
+            <td><code>{f.file_format}</code></td>
+            <td>{f.record_count.toLocaleString()}</td>
+            <td>{f.file_size_in_bytes.toLocaleString()}</td>
+            <td><code>{f.partition ? JSON.stringify(f.partition) : ''}</code></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 
   return (
     <div
@@ -191,6 +297,9 @@ export const MetadataPanel: React.FC = () => {
                   {tab.id === 'snapshots' && (
                     <span className="metadata-panel__badge">{snapshots.length}</span>
                   )}
+                  {tab.id === 'files' && (
+                    <span className="metadata-panel__badge">{files.length}</span>
+                  )}
                 </button>
               );
             })}
@@ -198,16 +307,21 @@ export const MetadataPanel: React.FC = () => {
 
           {/* Tab content */}
           <div className="metadata-panel__tab-content scrollable">
+            {/* Global filter box */}
+            <div style={{ marginBottom: '12px', padding: '0 16px' }}>
+              <input
+                className="input metadata-panel__filter"
+                type="text"
+                placeholder="Filter current view by text..."
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                style={{ width: '100%', maxWidth: '100%' }}
+              />
+            </div>
+
             {/* Schema tab */}
             {activeTab === 'schema' && (
               <div className="metadata-panel__schema">
-                <input
-                  className="input metadata-panel__filter"
-                  type="text"
-                  placeholder="Filter columns…"
-                  value={schemaFilter}
-                  onChange={(e) => setSchemaFilter(e.target.value)}
-                />
                 <table className="metadata-panel__table">
                   <thead>
                     <tr>
@@ -249,7 +363,9 @@ export const MetadataPanel: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {meta.partitionSpec.map((field, i) => (
+                      {meta.partitionSpec
+                        .filter(f => f.toLowerCase().includes(globalFilter.toLowerCase()))
+                        .map((field, i) => (
                         <tr key={i}>
                           <td className="text-muted">{i + 1}</td>
                           <td><code>{field}</code></td>
@@ -278,6 +394,7 @@ export const MetadataPanel: React.FC = () => {
                     </thead>
                     <tbody>
                       {Object.entries(meta.properties)
+                        .filter(([k, v]) => k.toLowerCase().includes(globalFilter.toLowerCase()) || v.toLowerCase().includes(globalFilter.toLowerCase()))
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([key, value]) => (
                           <tr key={key}>
@@ -300,7 +417,9 @@ export const MetadataPanel: React.FC = () => {
                   </div>
                 ) : (
                   <div className="metadata-panel__snapshot-list">
-                    {snapshots.map((snap) => (
+                    {snapshots
+                        .filter(s => s.snapshotId.toLowerCase().includes(globalFilter.toLowerCase()) || s.operation.toLowerCase().includes(globalFilter.toLowerCase()) || Object.values(s.summary).some(v => v.toLowerCase().includes(globalFilter.toLowerCase())))
+                        .map((snap) => (
                       <div key={snap.snapshotId} className="metadata-panel__snapshot-card">
                         <div className="metadata-panel__snapshot-header">
                           <span className="metadata-panel__snapshot-op">{snap.operation}</span>
@@ -320,6 +439,60 @@ export const MetadataPanel: React.FC = () => {
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Files tab */}
+            {activeTab === 'files' && (
+              <div className="metadata-panel__files">
+                {files.length === 0 ? (
+                  <div className="metadata-panel__empty-tab">
+                    <p className="text-muted">No files available or fetching failed.</p>
+                  </div>
+                ) : (
+                  <div className="metadata-panel__files-content">
+                    {/* Partition grouping controls */}
+                    {partitionKeys.length > 0 && (
+                      <div className="metadata-panel__group-controls" style={{ marginBottom: '16px', padding: '12px', background: 'var(--surface-color-light, #1e293b)', borderRadius: '6px' }}>
+                        <span className="text-muted" style={{ marginRight: '16px', fontSize: '13px', fontWeight: 500 }}>Group by partition field:</span>
+                        {partitionKeys.map(key => (
+                          <label key={key} style={{ marginRight: '16px', fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                            <input 
+                              type="checkbox" 
+                              style={{ marginRight: '6px', cursor: 'pointer' }}
+                              checked={groupByKeys.includes(key)}
+                              onChange={(e) => {
+                                if (e.target.checked) setGroupByKeys(prev => [...prev, key]);
+                                else setGroupByKeys(prev => prev.filter(k => k !== key));
+                              }}
+                            />
+                            {key}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
+                    {groupedFiles ? (
+                      <div className="metadata-panel__grouped-files">
+                        {Object.entries(groupedFiles).map(([grp, filesInGroup]) => (
+                          <details key={grp} className="metadata-panel__group-details" open style={{ marginBottom: '12px', border: '1px solid var(--border-color, #334155)', borderRadius: '6px', overflow: 'hidden' }}>
+                            <summary style={{ padding: '10px 16px', background: '#0f172a', cursor: 'pointer', fontWeight: 500, fontSize: '13px' }}>
+                              <span style={{ color: 'var(--primary-color, #38bdf8)' }}>{grp}</span> 
+                              <span className="text-muted" style={{ fontSize: '12px', marginLeft: '12px' }}>
+                                ({filesInGroup.length} files, {filesInGroup.reduce((sum, f) => sum + f.file_size_in_bytes, 0).toLocaleString()} Bytes)
+                              </span>
+                            </summary>
+                            <div style={{ borderTop: '1px solid var(--border-color, #334155)' }}>
+                              {renderFilesTable(filesInGroup)}
+                            </div>
+                          </details>
+                        ))}
+                      </div>
+                    ) : (
+                      renderFilesTable(processedFiles)
+                    )}
                   </div>
                 )}
               </div>

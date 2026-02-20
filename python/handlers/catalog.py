@@ -93,6 +93,41 @@ class CatalogHandler:
         partition_spec = [str(field) for field in tbl.spec().fields] if tbl.spec() else []
         properties = dict(tbl.properties) if hasattr(tbl, "properties") else {}
 
+        # Inject additional structural properties
+        try:
+            if hasattr(tbl, "format_version"):
+                properties["format-version"] = str(tbl.format_version)
+            elif hasattr(tbl, "metadata") and hasattr(tbl.metadata, "format_version"):
+                properties["format-version"] = str(tbl.metadata.format_version)
+
+            if hasattr(tbl, "sort_order"):
+                so = tbl.sort_order()
+                if so and hasattr(so, "fields") and so.fields:
+                    sort_strs = []
+                    schema = tbl.schema() if hasattr(tbl, "schema") else None
+                    for f in so.fields:
+                        col_name = str(f.source_id)
+                        if schema:
+                            try:
+                                col_name = schema.find_column_name(f.source_id) or col_name
+                            except Exception:
+                                pass
+                        
+                        dir_str = "ASC" if "ASC" in str(f.direction) else "DESC"
+                        null_str = "NULLS FIRST" if "FIRST" in str(f.null_order) else "NULLS LAST"
+                        sort_strs.append(f"{col_name} {dir_str} {null_str}")
+                    properties["sort-order"] = ", ".join(sort_strs)
+                
+            if hasattr(tbl, "current_snapshot"):
+                snap = tbl.current_snapshot()
+                if snap:
+                    properties["current-snapshot-id"] = str(snap.snapshot_id)
+            
+            if "format" not in properties:
+                properties["format"] = "iceberg/parquet"
+        except Exception:
+            pass
+
         # Include snapshots in the same response (same table object, no second load)
         snapshots = []
         try:
@@ -130,3 +165,38 @@ class CatalogHandler:
         """Legacy endpoint — now included in describe_table response."""
         result = self.describe_table(params)
         return result.get("snapshots", [])
+
+    def get_files(self, params: dict) -> list[dict]:
+        """Get data files for a table."""
+        catalog = params["catalog"]
+        table = params["table"]
+        ice = get_iceframe(catalog)
+        try:
+            tbl = ice.catalog.load_table(tuple(table.split(".")))
+            if hasattr(tbl, "inspect") and hasattr(tbl.inspect, "data_files"):
+                df = tbl.inspect.data_files()
+                if hasattr(df, "to_pandas"):
+                    df = df.to_pandas()
+                
+                # Extract relevant fields
+                files = []
+                # df is a pandas DataFrame, we can iterate over records
+                for record in df.to_dict(orient="records"):
+                    raw_part = record.get("partition", {})
+                    part_dict = {}
+                    if isinstance(raw_part, dict):
+                        for k, v in raw_part.items():
+                            part_dict[str(k)] = str(v)
+                            
+                    files.append({
+                        "file_path": str(record.get("file_path", "")),
+                        "file_format": str(record.get("file_format", "")),
+                        "record_count": int(record.get("record_count", 0)),
+                        "file_size_in_bytes": int(record.get("file_size_in_bytes", 0)),
+                        "partition": part_dict
+                    })
+                return files
+        except Exception as e:
+            print(f"Error fetching files for {table}: {e}")
+            pass
+        return []

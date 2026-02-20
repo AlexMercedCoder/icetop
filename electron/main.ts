@@ -63,6 +63,10 @@ const setupIPC = () => {
     return pythonManager?.sendRequest('get_snapshots', { catalog, table });
   });
 
+  ipcMain.handle('catalog:getFiles', async (_event, catalog: string, table: string) => {
+    return pythonManager?.sendRequest('get_files', { catalog, table });
+  });
+
   // SQL operations
   ipcMain.handle('sql:execute', async (_event, catalog: string, query: string) => {
     return pythonManager?.sendRequest('execute_sql', { catalog, query });

@@ -30,3 +30,11 @@ export interface Snapshot {
   operation: string;
   summary: Record<string, string>;
 }
+
+export interface TableFile {
+  file_path: string;
+  file_format: string;
+  record_count: number;
+  file_size_in_bytes: number;
+  partition: Record<string, string>;
+}

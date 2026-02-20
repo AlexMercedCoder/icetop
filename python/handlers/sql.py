@@ -9,7 +9,7 @@ import re
 import sys
 import time
 import polars as pl
-from handlers.iceframe_loader import get_iceframe
+from handlers.iceframe_loader import get_iceframe, list_catalog_names
 
 
 class SQLHandler:
@@ -39,18 +39,47 @@ class SQLHandler:
         """Convert dotted table ref to a flat alias."""
         return ref.replace(".", "__")
 
+    @staticmethod
+    def _resolve_catalog_for_ref(ref: str, default_catalog: str) -> tuple[str, str]:
+        """Resolve the catalog and stripped table ref for a table reference.
+
+        If the ref starts with a known catalog name (from pyiceberg.yaml),
+        use that catalog and strip its prefix. Otherwise use the default catalog.
+
+        Returns:
+            (catalog_name, table_ref_without_catalog_prefix)
+        """
+        known_catalogs = list_catalog_names()
+        parts = ref.split(".")
+        if len(parts) >= 2 and parts[0] in known_catalogs:
+            return parts[0], ".".join(parts[1:])
+        return default_catalog, ref
+
     def execute(self, params: dict) -> dict:
         catalog = params["catalog"]
         query = params["query"]
-        ice = get_iceframe(catalog)
 
-        # Step 1: Strip catalog prefix
-        cleaned_query = self._strip_catalog_prefix(query, catalog)
+        # Step 1: Strip the selected catalog prefix from the query
+        known_catalogs = list_catalog_names()
+        cleaned_query = query
+        for cat_name in known_catalogs:
+            cleaned_query = self._strip_catalog_prefix(cleaned_query, cat_name)
         print(f"[SQL] Cleaned query: {cleaned_query}", file=sys.stderr)
 
-        # Step 2: Extract table references
+        # Step 2: Extract table references (after all catalog prefixes stripped)
         table_refs = self._extract_table_refs(cleaned_query)
         print(f"[SQL] Extracted table refs: {table_refs}", file=sys.stderr)
+
+        # Also extract refs from the ORIGINAL query to detect cross-catalog refs
+        original_refs = self._extract_table_refs(query)
+        print(f"[SQL] Original table refs: {original_refs}", file=sys.stderr)
+
+        # Build a mapping: cleaned_ref -> (catalog_to_use, cleaned_ref)
+        # by checking original refs for catalog prefixes
+        ref_catalog_map: dict[str, str] = {}
+        for orig_ref in original_refs:
+            resolved_catalog, stripped_ref = self._resolve_catalog_for_ref(orig_ref, catalog)
+            ref_catalog_map[stripped_ref] = resolved_catalog
 
         start = time.time()
 
@@ -63,14 +92,17 @@ class SQLHandler:
             for ref in table_refs:
                 alias = self._make_alias(ref)
                 alias_map[ref] = alias
-                print(f"[SQL] Loading table '{ref}' as '{alias}'", file=sys.stderr)
+                # Determine which catalog to use for this table
+                effective_catalog = ref_catalog_map.get(ref, catalog)
+                ice = get_iceframe(effective_catalog)
+                print(f"[SQL] Loading table '{ref}' from catalog '{effective_catalog}' as '{alias}'", file=sys.stderr)
                 try:
                     tbl_df = ice.read_table(ref)
                     ctx.register(alias, tbl_df.lazy())
                     print(f"[SQL] Registered '{alias}' ({tbl_df.height} rows, {len(tbl_df.columns)} cols)", file=sys.stderr)
                 except Exception as e:
-                    print(f"[SQL] ERROR loading '{ref}': {e}", file=sys.stderr)
-                    raise RuntimeError(f"Could not load table '{ref}': {e}")
+                    print(f"[SQL] ERROR loading '{ref}' from catalog '{effective_catalog}': {e}", file=sys.stderr)
+                    raise RuntimeError(f"Could not load table '{effective_catalog}.{ref}': {e}")
 
             # Step 4: Rewrite SQL to use flat aliases
             rewritten_sql = cleaned_query
@@ -87,6 +119,7 @@ class SQLHandler:
             df = result_lf.collect()
         else:
             # No table refs (e.g. SELECT 1+1), try DataFusion directly
+            ice = get_iceframe(catalog)
             df = ice.query_datafusion(cleaned_query)
 
         elapsed_ms = int((time.time() - start) * 1000)

@@ -22,7 +22,7 @@ export const useSQLStore = create<SQLStore>((set, get) => {
     id: uuid(),
     title: 'Query 1',
     query: '',
-    catalog: 'dremio',
+    catalog: '',
     result: null,
     isExecuting: false,
     error: null,
@@ -33,13 +33,15 @@ export const useSQLStore = create<SQLStore>((set, get) => {
     activeTabId: defaultTab.id,
     history: [],
 
-    addTab: (catalog = 'dremio') => {
+    addTab: (catalog?: string) => {
       const tabs = get().tabs;
+      const activeTab = tabs.find((t) => t.id === get().activeTabId);
+      const effectiveCatalog = catalog || activeTab?.catalog || '';
       const newTab: SQLTab = {
         id: uuid(),
         title: `Query ${tabs.length + 1}`,
         query: '',
-        catalog,
+        catalog: effectiveCatalog,
         result: null,
         isExecuting: false,
         error: null,

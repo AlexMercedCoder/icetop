@@ -58,6 +58,58 @@
   --info:    #{$info};
 }
 
+// ── Iceberg — matches the app icon's light blue palette ──
+:root[data-theme="iceberg"] {
+  --bg-app:        #C8E6F5;
+  --bg-sidebar:    #B3D9EE;
+  --bg-panel:      #D6EDF8;
+  --bg-card:       #E3F3FB;
+  --bg-input:      #E8F4FC;
+  --bg-hover:      #A6D2E8;
+  --bg-active:     #94C8E2;
+
+  --text-primary:  #0A1628;
+  --text-secondary: #1D365C;
+  --text-muted:    #3A5A8C;
+
+  --border:        #8BB8D8;
+  --border-subtle: #A6CBEA;
+
+  --accent-primary:   #1D365C;
+  --accent-secondary: #25436E;
+
+  --success: #{$success};
+  --error:   #{$error};
+  --warning: #{$warning};
+  --info:    #1D365C;
+}
+
+// ── Midnight — deep dark with cool teal accents ──
+:root[data-theme="midnight"] {
+  --bg-app:        #0D1117;
+  --bg-sidebar:    #161B22;
+  --bg-panel:      #1C2128;
+  --bg-card:       #22272E;
+  --bg-input:      #161B22;
+  --bg-hover:      #2D333B;
+  --bg-active:     #373E47;
+
+  --text-primary:  #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-muted:    #6E7681;
+
+  --border:        #373E47;
+  --border-subtle: #2D333B;
+
+  --accent-primary:   #58A6FF;
+  --accent-secondary: #3FB950;
+
+  --success: #3FB950;
+  --error:   #F85149;
+  --warning: #D29922;
+  --info:    #58A6FF;
+}
+
 // ============================================================
 // Global Styles
 // ============================================================
@@ -127,14 +179,14 @@ code, pre, .monaco-editor {
 
   &--primary {
     background: var(--accent-primary);
-    color: $navy-900;
-    &:hover { background: $yellow-400; }
+    color: $white;
+    &:hover { filter: brightness(1.15); }
   }
 
   &--secondary {
     background: var(--accent-secondary);
     color: $white;
-    &:hover { background: $orange-400; }
+    &:hover { filter: brightness(1.15); }
   }
 
   &--ghost {

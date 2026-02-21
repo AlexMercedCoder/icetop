@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Book, Code, Database, Bot, Terminal } from 'lucide-react';
+import { ExternalLink, Book, Code, Database, Bot, Terminal, Settings } from 'lucide-react';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
@@ -11,6 +11,7 @@ import docBrowsing from '../../docs/02-browsing-data.md?raw';
 import docSQL from '../../docs/03-sql-queries.md?raw';
 import docAI from '../../docs/04-ai-assistant.md?raw';
 import docNotebooks from '../../docs/05-notebooks.md?raw';
+import docSettings from '../../docs/06-settings.md?raw';
 
 const internalDocs = [
   { id: 'start', title: 'Getting Started', icon: <Book size={16} />, content: docGettingStarted },
@@ -18,6 +19,7 @@ const internalDocs = [
   { id: 'sql', title: 'SQL Queries', icon: <Code size={16} />, content: docSQL },
   { id: 'ai', title: 'AI Assistant', icon: <Bot size={16} />, content: docAI },
   { id: 'notebook', title: 'Notebooks', icon: <Terminal size={16} />, content: docNotebooks },
+  { id: 'settings', title: 'Settings', icon: <Settings size={16} />, content: docSettings },
 ];
 
 const externalLinks = [

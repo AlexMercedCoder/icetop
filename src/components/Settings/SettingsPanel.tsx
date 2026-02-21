@@ -171,6 +171,8 @@ export const SettingsPanel: React.FC = () => {
           >
             <option value="dark">Dark</option>
             <option value="light">Light</option>
+            <option value="iceberg">Iceberg</option>
+            <option value="midnight">Midnight</option>
           </select>
         </div>
       </section>

@@ -54,12 +54,13 @@ table {
 }
 
 :focus-visible {
-  outline: 2px solid $yellow-500;
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba($yellow-500, 0.3);
+  background: var(--accent-primary);
+  color: #fff;
 }
 
 // Scrollbar styling (Webkit)

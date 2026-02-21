@@ -4,7 +4,7 @@
 
 export type LLMProvider = 'openai' | 'anthropic' | 'gemini';
 export type DBBackend = 'sqlite' | 'postgres';
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'iceberg' | 'midnight';
 
 export interface LLMSettings {
   provider: LLMProvider;
@@ -39,5 +39,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   pyicebergConfigPath: '~/.pyiceberg.yaml',
   pythonPath: 'python3',
-  theme: 'dark',
+  theme: 'midnight',
 };
